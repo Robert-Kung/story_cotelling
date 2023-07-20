@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
-from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.tem_graph import KnowledgeGraph
+from environment.tem_chatenv import StoryBotRetellEnv
 import json
 import logging
 from datetime import datetime
@@ -159,6 +159,9 @@ class DQNTrainer:
         best_score_1 = -1
         best_score_2 = -1
 
+        dialogue_history_df1 = pd.DataFrame()
+        dialogue_history_df2 = pd.DataFrame()
+
         for e in range(self.epoch):
             score1_list = []
             score2_list = []
@@ -173,10 +176,10 @@ class DQNTrainer:
                 
                 output_dialogue2 = ''
                 output_kg2 = None
-
+                self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
                 while True:
                     # two agent talk with each other
-                    self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
+                    # self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
                     done1, done1_msg = self.env1.done()
                     if not done1:
                         state1 = self.env1.observation()
@@ -191,7 +194,7 @@ class DQNTrainer:
                     if done1:
                         break
                     
-                    self.env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
+                    # self.env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
                     done2, done2_msg = self.env2.done()
                     if not done2:
                         state2 = self.env2.observation()
@@ -224,6 +227,11 @@ class DQNTrainer:
                                 'epsilon1': self.agent1.model.epsilon, 'epsilon2': self.agent2.model.epsilon, \
                                 'similarity1': similarity1, 'similarity2': similarity2}, ignore_index=True)
                 
+                dialogue_history_df1 = dialogue_history_df1.append(self.env1.dialogue_log_list, ignore_index=True)
+                dialogue_history_df2 = dialogue_history_df2.append(self.env2.dialogue_log_list, ignore_index=True)
+                dialogue_history_df1.to_csv(f'output/dialogue_history1_{dt_start_str}.csv', index=False)
+                dialogue_history_df2.to_csv(f'output/dialogue_history2_{dt_start_str}.csv', index=False)
+
                 score1_list.append(final_score1)
                 score2_list.append(final_score2)
                 similarity1_list.append(similarity1)
@@ -247,4 +255,4 @@ class DQNTrainer:
             
             # self.agent1.save(self.agent1_model_name)
             # self.agent2.save(self.agent2_model_name)
-            df.to_csv(f'result_{dt_start_str}.csv', index=False)
+            df.to_csv(f'output/result_{dt_start_str}.csv', index=False)

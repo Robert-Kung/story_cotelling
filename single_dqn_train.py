@@ -7,7 +7,7 @@ import argparse
 import torch
 import numpy as np
 from datetime import datetime
-from dqn import DQN, DQNAgent, DQNTrainer
+from single_dqn import DQN, DQNAgent, DQNTrainer
 from environment.graph import KnowledgeGraph
 from environment.chatenv_copy import StoryBotRetellEnv
 
@@ -15,7 +15,7 @@ from environment.chatenv_copy import StoryBotRetellEnv
 NOW_STR = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 # set logging format
-logging.basicConfig(filename=f'log/dqn_copy_{NOW_STR}.log',
+logging.basicConfig(filename=f'log/dqn_single_{NOW_STR}.log',
                     level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 

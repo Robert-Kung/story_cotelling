@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from dqn import DQN, DQNAgent, DQNTrainer
 from environment.graph import KnowledgeGraph
-from environment.chatenv import StoryBotRetellEnv
+from environment.chatenv_copy import StoryBotRetellEnv
 
 # set logging format
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -21,7 +21,7 @@ parser.add_argument("-c", "--cuda", help="cuda device", type=int, default=0, cho
 parser.add_argument("-m", "--model1", help="load dqn model1 name", type=str, default='model/dqn1.pth')
 parser.add_argument("-l", "--model2", help="load dqn model2 name", type=str, default='model/dqn2.pth')
 parser.add_argument("-u", "--summary", help="story summary file", type=str, default="data/summary/summary_train.json")
-parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="knowledge_graph/data/kg/new_train")
+parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/new_train")
 args = parser.parse_args()
 
 # set the hyperparameters
@@ -55,6 +55,15 @@ device = torch.device(f'cuda:{args.cuda}' if torch.cuda.is_available() else 'cpu
 
 # ignore the warning
 warnings.filterwarnings('ignore')
+
+def merge_dicts(dict1, dict2):
+    merged_dict = dict1.copy()
+    for key, value in dict2.items():
+        if key in merged_dict:
+            merged_dict[key] += value
+        else:
+            merged_dict[key] = value
+    return merged_dict
 
 # load the story summary dataset
 story_summary_dataset = {}
@@ -104,6 +113,9 @@ df2 = pd.DataFrame()
 
 score1_list = []
 score2_list = []
+similarity1_list = []
+similarity2_list = []
+action_counter = {}
 
 for current_story_name in story_name_list:
     logging.info(f'current story name: {current_story_name}')
@@ -121,7 +133,8 @@ for current_story_name in story_name_list:
         if not done1:
             state1 = env1.observation()
             state1 = torch.tensor(state1, dtype=torch.float32).unsqueeze(0)
-            action1 = agent1.act(state1)
+            # action1 = agent1.act(state1)
+            action1 = 0
             output_dialogue1, output_kg1 = env1.step(action1)
             next_state1 = env1.observation()
             reward1, score1 = env1.reward()
@@ -136,7 +149,8 @@ for current_story_name in story_name_list:
         if not done2:
             state2 = env2.observation()
             state2 = torch.tensor(state2, dtype=torch.float32).unsqueeze(0)
-            action2 = agent1.act(state1)
+            # action2 = agent1.act(state1)
+            action2 = 0
             output_dialogue2, output_kg2 = env2.step(action2)
             next_state2 = env2.observation()
             reward2, score2 = env2.reward()
@@ -146,15 +160,24 @@ for current_story_name in story_name_list:
         if done2:
             break
 
-    score1_list.append(score1)
-    score2_list.append(score2)
+    score1_list.append(env1.current_score)
+    score2_list.append(env2.current_score)
+
+    similarity1_list.append(env1.dialogue_summary_similarity())
+    similarity2_list.append(env2.dialogue_summary_similarity())
+
+    # action_counter = merge_dicts(action_counter, env1.count_actions())
+    action_counter = merge_dicts(action_counter, env2.count_actions())
+    logging.info(f'agent1 score: {action_counter}')
 
     # append df
     # TODO: kg to sen_idx
     df1 = df1.append(env1.dialogue_log_list, ignore_index=True)
     df2 = df2.append(env2.dialogue_log_list, ignore_index=True)
-    df1.to_csv('dialogue_history_1.csv', index=False)
-    df2.to_csv('dialogue_history_2.csv', index=False)
+    df1.to_csv('output/dialogue_history_1.csv', index=False)
+    df2.to_csv('output/dialogue_history_2.csv', index=False)
 
 print('agent1 score: ', np.mean(score1_list))
 print('agent2 score: ', np.mean(score2_list))
+print('agent1 similarity: ', np.mean(similarity1_list))
+print('agent2 similarity: ', np.mean(similarity2_list))

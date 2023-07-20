@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
-from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.tem_graph import KnowledgeGraph
+from environment.tem_chatenv import StoryBotRetellEnv
 import json
 import logging
 from datetime import datetime
@@ -107,7 +107,7 @@ class DQNTrainer:
                  story_summary_path, story_kg_path, epoch=100, episodes=100, batch_size=8) -> None:
         # environment
         self.env1 = env1
-        self.env2 = env2
+        # self.env2 = env2
 
         # agent
         self.agent1 = agent1
@@ -159,24 +159,25 @@ class DQNTrainer:
         best_score_1 = -1
         best_score_2 = -1
 
+        dialogue_history_df1 = pd.DataFrame()
+        dialogue_history_df2 = pd.DataFrame()
+
         for e in range(self.epoch):
             score1_list = []
-            score2_list = []
             similarity1_list = []
-            similarity2_list = []
             action_counter = {}
             # for episode in range(self.episodes):
             for episode, story in enumerate(self.story_name_list):
                 self.set_current_story_kg(story)
                 self.env1.reset(story_name=self.current_story_name, story_kg=self.current_kg)
-                self.env2.reset(story_name=self.current_story_name, story_kg=self.current_kg)
                 
                 output_dialogue2 = ''
                 output_kg2 = None
-
+                self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
+                
                 while True:
                     # two agent talk with each other
-                    self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
+                    # self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
                     done1, done1_msg = self.env1.done()
                     if not done1:
                         state1 = self.env1.observation()
@@ -191,16 +192,16 @@ class DQNTrainer:
                     if done1:
                         break
                     
-                    self.env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
-                    done2, done2_msg = self.env2.done()
+                    # self.env1.render(input_sentence=output_dialogue1, input_kg=output_kg1)
+                    done2, done2_msg = self.env1.done()
                     if not done2:
-                        state2 = self.env2.observation()
+                        state2 = self.env1.observation()
                         state2 = torch.tensor(state2, dtype=torch.float32).unsqueeze(0)
                         action2 = self.agent2.act(state2)
-                        output_dialogue2, output_kg2 = self.env2.step(action2)
-                        next_state2 = self.env2.observation()
-                        reward2, score2 = self.env2.reward()
-                        done2, done2_msg = self.env2.done()
+                        output_dialogue2, output_kg2 = self.env1.step(action2)
+                        next_state2 = self.env1.observation()
+                        reward2, score2 = self.env1.reward()
+                        done2, done2_msg = self.env1.done()
                         self.agent2.remember(state2, action2, reward2, next_state2, done2)
 
                     if done2:
@@ -210,41 +211,32 @@ class DQNTrainer:
                 self.agent2.replay(self.batch_size)
 
                 final_score1 = self.env1.current_score
-                final_score2 = self.env2.current_score
 
                 similarity1 = self.env1.dialogue_summary_similarity()
-                similarity2 = self.env2.dialogue_summary_similarity()
 
                 action_counter = self.merge_dicts(action_counter, self.env1.count_actions())
-                action_counter = self.merge_dicts(action_counter, self.env2.count_actions())
 
                 # append the result to df
                 df = df.append({'epoch': e, 'episode': episode, 'story_name': self.current_story_name, \
-                                'score1': final_score1, 'score2': final_score2, \
+                                'score1': final_score1,\
                                 'epsilon1': self.agent1.model.epsilon, 'epsilon2': self.agent2.model.epsilon, \
-                                'similarity1': similarity1, 'similarity2': similarity2}, ignore_index=True)
+                                'similarity1': similarity1}, ignore_index=True)
                 
+                dialogue_history_df1 = dialogue_history_df1.append(self.env1.dialogue_log_list, ignore_index=True)
+                dialogue_history_df1.to_csv(f'output/dialogue_history1_{dt_start_str}.csv', index=False)
+
                 score1_list.append(final_score1)
-                score2_list.append(final_score2)
                 similarity1_list.append(similarity1)
-                similarity2_list.append(similarity2)
             
             self.agent1.model.update_epsilon()
             self.agent2.model.update_epsilon()
 
             score1_mean = np.mean(score1_list)
-            score2_mean = np.mean(score2_list)
             similarity1_mean = np.mean(similarity1_list)
-            similarity2_mean = np.mean(similarity2_list)
-            logging.info('epoch: {:2}, score1: {:.4f}, score2: {:.4f}, similarity1: {:.4f}, similarity2: {:.4f}, action:{}'.format(e, score1_mean, score2_mean, similarity1_mean, similarity2_mean, action_counter))
+            logging.info('epoch: {:2}, score: {:.4f}, similarity: {:.4f}, action:{}'.format(e, score1_mean, similarity1_mean, action_counter))
 
             if score1_mean > best_score_1:
                 best_score_1 = score1_mean
                 self.agent1.save(self.agent1_model_name)
-            if score2_mean > best_score_2:
-                best_score_2 = score2_mean
-                self.agent2.save(self.agent2_model_name)
-            
-            # self.agent1.save(self.agent1_model_name)
-            # self.agent2.save(self.agent2_model_name)
-            df.to_csv(f'result_{dt_start_str}.csv', index=False)
+
+            df.to_csv(f'output/result_{dt_start_str}.csv', index=False)
