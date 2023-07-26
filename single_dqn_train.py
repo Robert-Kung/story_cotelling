@@ -10,7 +10,7 @@ import numpy as np
 from datetime import datetime
 from single_dqn import DQN, DQNAgent, DQNTrainer
 from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.chatenv import StoryBotRetellEnv
 
 # get the current time string
 NOW_STR = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -40,6 +40,8 @@ BATCH_SIZE = int(args.batch_size)
 LEARNING_RATE = float(args.learning_rate)
 SEED = int(args.seed)
 CUDA = args.cuda
+SUMMARY = args.summary
+KG = args.kg
 SAVE_MODEL_NAME_1 = args.name1
 SAVE_MODEL_NAME_2 = args.name2
 
@@ -49,6 +51,8 @@ logging.info(f'batch_size: {BATCH_SIZE}')
 logging.info(f'learning_rate: {LEARNING_RATE}')
 logging.info(f'seed: {SEED}')
 logging.info(f'cuda: {CUDA}')
+logging.info(f'story summary: {SUMMARY}')
+logging.info(f'kg: {KG}')
 logging.info(f'save model_1 name: {SAVE_MODEL_NAME_1}')
 logging.info(f'save model_2 name: {SAVE_MODEL_NAME_2}')
 
@@ -69,16 +73,16 @@ warnings.filterwarnings('ignore')
 
 story_summary_dataset = {}
     
-with open('data/summary/summary_train.json', 'r', encoding='utf8') as f:
+with open(SUMMARY, 'r', encoding='utf8') as f:
     story_summary_dataset = {**story_summary_dataset, **json.load(f)}
 
 storybot_env_1 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)
 storybot_env_2 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)
@@ -92,8 +96,8 @@ trainer = DQNTrainer(env1=storybot_env_1,
                      env2=storybot_env_2,
                      agent1=agent_1,
                      agent2=agent_2,
-                     story_summary_path='data/summary/summary_train.json',
-                     story_kg_path='data/kg/new_train',
+                     story_summary_path=SUMMARY,
+                     story_kg_path=KG,
                      epoch=EPOCHS,
                      batch_size=BATCH_SIZE)
 

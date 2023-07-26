@@ -82,13 +82,13 @@ with open(SUMMARY, 'r', encoding='utf8') as f:
 
 with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}', memory='10G', timeout=120000) as corenlp_client:
     storybot_env_1 = StoryBotRetellEnv(story_summary_dataset,
-                                    reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt',
+                                    dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt',
                                     kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt',
                                     embedding_model_name='sentence-transformers/all-MiniLM-L6-v2',
                                     device=device,
                                     corenlp_client=corenlp_client)
     storybot_env_2 = StoryBotRetellEnv(story_summary_dataset,
-                                    reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                                    dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                                     kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                                     embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                                     device=device,

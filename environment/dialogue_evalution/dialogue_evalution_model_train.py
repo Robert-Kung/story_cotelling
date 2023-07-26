@@ -1,5 +1,5 @@
 from transformers import RobertaTokenizer
-from ranking_model_compare_story import RankingModel, RankingDataset, RankingTrainer
+from dialogue_evalution import DialogueEvalutionModel, DialogueEvalutionDataset, DialogueEvalutionTrainer
 from datetime import datetime
 import torch
 import warnings
@@ -15,7 +15,7 @@ import logging
 NOW_STR = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 # set logging format
-logging.basicConfig(filename=f'../../log/ranking_model_{NOW_STR}.log',
+logging.basicConfig(filename=f'../../log/dialogue_evalution_{NOW_STR}.log',
                     level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -27,7 +27,7 @@ parser.add_argument("-l", "--learning_rate", help="learning rate", type=float, d
 parser.add_argument("-d", "--dropout", help="dropout rate", type=float, default=0.1)
 parser.add_argument("-s", "--seed", help="random seed", type=int, default=42)
 parser.add_argument("-c", "--cuda", help="cuda device", type=int, default=0, choices=[0, 1, 2])
-parser.add_argument("-m", "--model", help="model path", type=str, default=f"model/ranking_model_best_{NOW_STR}.pt")
+parser.add_argument("-m", "--model", help="model path", type=str, default=f"model/dialogue_evalution_{NOW_STR}.pt")
 args = parser.parse_args()
 
 # set the hyperparameters
@@ -82,9 +82,9 @@ with open('../../data/plot_point/plot_point_test.json', 'r', encoding='utf8') as
 
 # load the tokenizer and dataset
 tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
-train_dataset = RankingDataset(train_data, train_story_summary, tokenizer)
-val_dataset = RankingDataset(val_data, val_story_summary, tokenizer)
-test_dataset = RankingDataset(test_data, test_story_summary, tokenizer)
+train_dataset = DialogueEvalutionDataset(train_data, train_story_summary, tokenizer)
+val_dataset = DialogueEvalutionDataset(val_data, val_story_summary, tokenizer)
+test_dataset = DialogueEvalutionDataset(test_data, test_story_summary, tokenizer)
 
 # load the dataloader
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -92,8 +92,8 @@ val_dataloader = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE,
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # load the model and trainer
-model = RankingModel(device)
-trainer = RankingTrainer(model, train_dataloader, val_dataloader, test_dataloader, device)
+model = DialogueEvalutionModel(device)
+trainer = DialogueEvalutionTrainer(model, train_dataloader, val_dataloader, test_dataloader, device)
 
 logging.info('Start training')
 

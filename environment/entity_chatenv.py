@@ -7,7 +7,7 @@ import pandas as pd
 from transformers import AutoTokenizer, AutoModel
 from .entity_graph import KnowledgeGraph
 from .kg2text.kg2text_model import Kg2TextModel
-from .reward.ranking_model_compare_story import RankingModel
+from .dialogue_evalution.dialogue_evalution import DialogueEvalutionModel
 from stanza.server import CoreNLPClient
 import logging
 import warnings
@@ -21,7 +21,7 @@ def mean_pooling(model_output, attention_mask):
 
 class StoryBotRetellEnv:
     def __init__(self, story_summary_dataset: dict, 
-                 reward_model_ckpt: str, 
+                 dialogue_evalution_model_ckpt: str, 
                  kg2text_model_ckpt: str, 
                  embedding_model_name: str, 
                  device: str,
@@ -48,21 +48,21 @@ class StoryBotRetellEnv:
         # story summary dataset
         self.story_summary_dataset = story_summary_dataset
 
-        # reward model
-        self.reward_tokenizer = AutoTokenizer.from_pretrained('roberta-base')
-        self.reward_model_device = self.device
-        self.reward_model = RankingModel(self.reward_model_device)
-        self.reward_model.load_state_dict(torch.load(reward_model_ckpt,
-                                                     map_location=self.reward_model_device))
-        self.reward_model.to(self.reward_model_device)
-        self.reward_model.eval()
+        # dialogue evalution model
+        self.dialogue_evalution_tokenizer = AutoTokenizer.from_pretrained('roberta-base')
+        self.dialogue_evalution_model_device = self.device
+        self.dialogue_evalution_model = DialogueEvalutionModel(self.dialogue_evalution_model_device)
+        self.dialogue_evalution_model.load_state_dict(torch.load(dialogue_evalution_model_ckpt,
+                                                     map_location=self.dialogue_evalution_model_device))
+        self.dialogue_evalution_model.to(self.dialogue_evalution_model_device)
+        self.dialogue_evalution_model.eval()
 
         # kg2text model
         self.kg2text_tokenizer = AutoTokenizer.from_pretrained('t5-base')
         self.kg2text_model_device = self.device
         self.kg2text_model = Kg2TextModel('t5-base')
         self.kg2text_model.load_state_dict(torch.load(kg2text_model_ckpt,
-                                                      map_location=self.reward_model_device))
+                                                      map_location=self.dialogue_evalution_model_device))
         self.kg2text_model.to(self.kg2text_model_device)
         self.kg2text_model.eval()
 
@@ -268,37 +268,37 @@ class StoryBotRetellEnv:
         if current_sentence is not None:
             dialogue_history.append(current_sentence)
         
-        input_ids = self.reward_tokenizer.encode('<s>' + '</s>'.join(dialogue_history),
+        input_ids = self.dialogue_evalution_tokenizer.encode('<s>' + '</s>'.join(dialogue_history),
                                                  add_special_tokens=False)
         attention_mask = [1] * len(input_ids)
-        input_ids_summary = self.reward_tokenizer.encode('<s>' + self.current_story_summary + '</s>',
+        input_ids_summary = self.dialogue_evalution_tokenizer.encode('<s>' + self.current_story_summary + '</s>',
                                                          add_special_tokens=False)
         attention_mask_summary = [1] * len(input_ids_summary)
 
         # check if the sequence length exceeds the maximum length
-        if len(input_ids) > self.reward_tokenizer.model_max_length:
+        if len(input_ids) > self.dialogue_evalution_tokenizer.model_max_length:
             # if the length is exceeded, truncate the sequence
-            input_ids = input_ids[:self.reward_tokenizer.model_max_length]
-            attention_mask = attention_mask[:self.reward_tokenizer.model_max_length]
+            input_ids = input_ids[:self.dialogue_evalution_tokenizer.model_max_length]
+            attention_mask = attention_mask[:self.dialogue_evalution_tokenizer.model_max_length]
         else:
             # if not exceeded, fill the sequence
-            padding_length = self.reward_tokenizer.model_max_length - len(input_ids)
-            input_ids = input_ids + [self.reward_tokenizer.pad_token_id] * padding_length
-            attention_mask = attention_mask + [self.reward_tokenizer.pad_token_id] * padding_length
+            padding_length = self.dialogue_evalution_tokenizer.model_max_length - len(input_ids)
+            input_ids = input_ids + [self.dialogue_evalution_tokenizer.pad_token_id] * padding_length
+            attention_mask = attention_mask + [self.dialogue_evalution_tokenizer.pad_token_id] * padding_length
 
-        if len(input_ids_summary) > self.reward_tokenizer.model_max_length:
-            input_ids_summary = input_ids_summary[:self.reward_tokenizer.model_max_length]
-            attention_mask_summary = attention_mask_summary[:self.reward_tokenizer.model_max_length]
+        if len(input_ids_summary) > self.dialogue_evalution_tokenizer.model_max_length:
+            input_ids_summary = input_ids_summary[:self.dialogue_evalution_tokenizer.model_max_length]
+            attention_mask_summary = attention_mask_summary[:self.dialogue_evalution_tokenizer.model_max_length]
         else:
-            padding_length = self.reward_tokenizer.model_max_length - len(input_ids_summary)
-            input_ids_summary = input_ids_summary + [self.reward_tokenizer.pad_token_id] * padding_length
-            attention_mask_summary = attention_mask_summary + [self.reward_tokenizer.pad_token_id] * padding_length
+            padding_length = self.dialogue_evalution_tokenizer.model_max_length - len(input_ids_summary)
+            input_ids_summary = input_ids_summary + [self.dialogue_evalution_tokenizer.pad_token_id] * padding_length
+            attention_mask_summary = attention_mask_summary + [self.dialogue_evalution_tokenizer.pad_token_id] * padding_length
         
         last_state_score = self.current_score
-        self.current_score = self.reward_model(torch.tensor(input_ids).unsqueeze(0).to(self.reward_model_device),
-                                               torch.tensor(attention_mask).unsqueeze(0).to(self.reward_model_device),
-                                               torch.tensor(input_ids_summary).unsqueeze(0).to(self.reward_model_device),
-                                               torch.tensor(attention_mask_summary).unsqueeze(0).to(self.reward_model_device))[0, 0].item()
+        self.current_score = self.dialogue_evalution_model(torch.tensor(input_ids).unsqueeze(0).to(self.dialogue_evalution_model_device),
+                                               torch.tensor(attention_mask).unsqueeze(0).to(self.dialogue_evalution_model_device),
+                                               torch.tensor(input_ids_summary).unsqueeze(0).to(self.dialogue_evalution_model_device),
+                                               torch.tensor(attention_mask_summary).unsqueeze(0).to(self.dialogue_evalution_model_device))[0, 0].item()
         reward = self.current_score - last_state_score - penalty
         score = self.current_score
 

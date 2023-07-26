@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from dqn import DQN, DQNAgent, DQNTrainer
 from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.chatenv import StoryBotRetellEnv
 
 # set logging format
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -72,7 +72,7 @@ with open('data/summary/summary_train.json', 'r', encoding='utf8') as f:
 
 # create the environment 1
 env1 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)
@@ -81,7 +81,7 @@ env1.user_name = 'agent2'
 
 # create the environment 2
 env2 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)

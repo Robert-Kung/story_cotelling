@@ -79,7 +79,7 @@ with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}') a
 
     # create the environment 1
     env1 = StoryBotRetellEnv(story_summary_dataset,
-                            reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                            dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                             kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                             embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                             device=device,
@@ -89,7 +89,7 @@ with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}') a
 
     # create the environment 2
     # env2 = StoryBotRetellEnv(story_summary_dataset,
-    #                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+    #                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
     #                         kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
     #                         embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
     #                         device=device,

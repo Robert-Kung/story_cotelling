@@ -10,7 +10,7 @@ import numpy as np
 from datetime import datetime
 from dqn import DQN, DQNAgent, DQNTrainer
 from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.chatenv import StoryBotRetellEnv
 
 # get the current time string
 NOW_STR = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -77,12 +77,12 @@ with open(SUMMARY, 'r', encoding='utf8') as f:
     story_summary_dataset = {**story_summary_dataset, **json.load(f)}
 
 storybot_env_1 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)
 storybot_env_2 = StoryBotRetellEnv(story_summary_dataset,
-                         reward_model_ckpt='environment/reward/model/ranking_model_best_c.pt', 
+                         dialogue_evalution_model_ckpt='environment/dialogue_evalution/model/dialogue_evalution_model_best.pt', 
                          kg2text_model_ckpt='environment/kg2text/model/kg2text_model.pt', 
                          embedding_model_name='sentence-transformers/all-MiniLM-L6-v2', 
                          device=device)

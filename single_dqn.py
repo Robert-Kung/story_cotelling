@@ -7,7 +7,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 from environment.graph import KnowledgeGraph
-from environment.chatenv_copy import StoryBotRetellEnv
+from environment.chatenv import StoryBotRetellEnv
 import json
 import logging
 from datetime import datetime
@@ -252,4 +252,4 @@ class DQNTrainer:
             
             # self.agent1.save(self.agent1_model_name)
             # self.agent2.save(self.agent2_model_name)
-            df.to_csv(f'result_{dt_start_str}.csv', index=False)
+            df.to_csv(f'output/result_{dt_start_str}.csv', index=False)
