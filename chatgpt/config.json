@@ -1,8 +1,8 @@
 {
   "openai":
   {
-    "organization": "org-KqFL3LbeGGyb4RcMCPBCR8kd",
-    "api_key": "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",
+    "organization": "org-xxxxxxxxxxxxxxxxxxxxxxxx",
+    "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxxxx",
     "gpt_model": "gpt-3.5-turbo"
   }
 }
