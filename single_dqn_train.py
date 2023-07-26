@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import random
 import warnings
@@ -15,9 +16,10 @@ from environment.chatenv_copy import StoryBotRetellEnv
 NOW_STR = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 # set logging format
-logging.basicConfig(filename=f'log/dqn_single_{NOW_STR}.log',
+logging.basicConfig(filename=f'log/single_dqn_{NOW_STR}.log',
                     level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # set the hyperparameters
 parser = argparse.ArgumentParser()
@@ -28,6 +30,8 @@ parser.add_argument("-s", "--seed", help="random seed", type=int, default=42)
 parser.add_argument("-c", "--cuda", help="cuda device", type=int, default=0, choices=[0, 1, 2])
 parser.add_argument("-m", "--name1", help="save_model_1 name", type=str, default=f'model/dqn1_{NOW_STR}.pth')
 parser.add_argument("-n", "--name2", help="save_model_2 name", type=str, default=f'model/dqn2_{NOW_STR}.pth')
+parser.add_argument("-u", "--summary", help="story summary file", type=str, default="data/summary/summary_train.json")
+parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/train_coref")
 args = parser.parse_args()
 
 # set the hyperparameters

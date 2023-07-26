@@ -7,9 +7,9 @@ import argparse
 import torch
 import numpy as np
 import pandas as pd
-from tem_dqn import DQN, DQNAgent, DQNTrainer
-from environment.tem_graph import KnowledgeGraph
-from environment.tem_chatenv import StoryBotRetellEnv
+from entity_dqn import DQN, DQNAgent, DQNTrainer
+from environment.entity_graph import KnowledgeGraph
+from environment.entity_chatenv import StoryBotRetellEnv
 from stanza.server import CoreNLPClient
 from tqdm import tqdm
 
@@ -22,17 +22,17 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--seed", help="random seed", type=int, default=42)
 parser.add_argument("-c", "--cuda", help="cuda device", type=int, default=0, choices=[0, 1, 2])
 parser.add_argument("-m", "--model1", help="load dqn model1 name", type=str, default='model/dqn1.pth')
-# parser.add_argument("-l", "--model2", help="load dqn model2 name", type=str, default='model/dqn2.pth')
+parser.add_argument("-l", "--model2", help="load dqn model2 name", type=str, default='model/dqn2.pth')
 parser.add_argument("-u", "--summary", help="story summary file", type=str, default="data/summary/summary_train.json")
-parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/new_train")
-parser.add_argument("-p", "--port", help="corenlp port", type=int, default=9000)
+parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/train_coref")
+parser.add_argument("-p", "--port", help="corenlp port", type=int, default=9090)
 args = parser.parse_args()
 
 # set the hyperparameters
 SEED = int(args.seed)
 CUDA = args.cuda
 DQN1 = args.model1
-# DQN2 = args.model2
+DQN2 = args.model2
 SUMMARY = args.summary
 KG = args.kg
 CORENLP_PORT = args.port
@@ -42,7 +42,7 @@ CORENLP_PORT = args.port
 logging.info(f'seed: {SEED}')
 logging.info(f'cuda: {CUDA}')
 logging.info(f'dqn1: {DQN1}')
-# logging.info(f'dqn2: {DQN2}')
+logging.info(f'dqn2: {DQN2}')
 logging.info(f'summary: {SUMMARY}')
 logging.info(f'kg: {KG}')
 logging.info(f'corenlp port: {CORENLP_PORT}')
@@ -114,7 +114,7 @@ with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}') a
 
     # set the agent2
     agent2 = DQNAgent(env=env2, epsilon=0)
-    agent2.load(DQN1)
+    agent2.load(DQN2)
 
 
     df1 = pd.DataFrame()
@@ -131,6 +131,7 @@ with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}') a
         logging.info(f'current story name: {current_story_name}')
         current_kg = kg_dict[current_story_name]
         env1.reset(story_name=current_story_name, story_kg=current_kg)
+        env2.reset(story_name=current_story_name, story_kg=current_kg)
 
         output_dialogue2 = ''
         output_kg2 = None
@@ -152,31 +153,39 @@ with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{CORENLP_PORT}') a
             if done1:
                 break
             
-            env1.render(input_sentence=output_dialogue1, input_kg=output_kg1)
-            done2, done2_msg = env1.done()
+            env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
+            done2, done2_msg = env2.done()
             if not done2:
-                state2 = env1.observation()
+                state2 = env2.observation()
                 state2 = torch.tensor(state2, dtype=torch.float32).unsqueeze(0)
                 action2 = agent2.act(state2)
-                output_dialogue2, output_kg2 = env1.step(action2)
-                next_state2 = env1.observation()
-                reward2, score2 = env1.reward()
-                done2, done2_msg = env1.done()
+                output_dialogue2, output_kg2 = env2.step(action2)
+                next_state2 = env2.observation()
+                reward2, score2 = env2.reward()
+                done2, done2_msg = env2.done()
                 # agent2.remember(state2, action2, reward2, next_state2, done2)
 
             if done2:
                 break
 
         score1_list.append(env1.current_score)
+        score2_list.append(env2.current_score)
 
         similarity1_list.append(env1.dialogue_summary_similarity())
+        similarity2_list.append(env2.dialogue_summary_similarity())
 
         action_counter = merge_dicts(action_counter, env1.count_actions())
+        action_counter = merge_dicts(action_counter, env2.count_actions())
         logging.info(f'agent action: {action_counter}')
 
         # append df
+        # TODO: kg to sen_idx
         df1 = df1.append(env1.dialogue_log_list, ignore_index=True)
+        df2 = df2.append(env2.dialogue_log_list, ignore_index=True)
         df1.to_csv('output/dialogue_history_1.csv', index=False)
+        df2.to_csv('output/dialogue_history_2.csv', index=False)
 
 print('agent1 score: ', np.mean(score1_list))
+print('agent2 score: ', np.mean(score2_list))
 print('agent1 similarity: ', np.mean(similarity1_list))
+print('agent2 similarity: ', np.mean(similarity2_list))

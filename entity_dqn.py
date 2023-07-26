@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
-from environment.tem_graph import KnowledgeGraph
-from environment.tem_chatenv import StoryBotRetellEnv
+from environment.entity_graph import KnowledgeGraph
+from environment.entity_chatenv import StoryBotRetellEnv
 import json
 import logging
 from datetime import datetime
@@ -176,10 +176,9 @@ class DQNTrainer:
                 
                 output_dialogue2 = ''
                 output_kg2 = None
-                self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
                 while True:
                     # two agent talk with each other
-                    # self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
+                    self.env1.render(input_sentence=output_dialogue2, input_kg=output_kg2)
                     done1, done1_msg = self.env1.done()
                     if not done1:
                         state1 = self.env1.observation()
@@ -194,7 +193,7 @@ class DQNTrainer:
                     if done1:
                         break
                     
-                    # self.env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
+                    self.env2.render(input_sentence=output_dialogue1, input_kg=output_kg1)
                     done2, done2_msg = self.env2.done()
                     if not done2:
                         state2 = self.env2.observation()

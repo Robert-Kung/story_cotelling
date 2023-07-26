@@ -21,7 +21,7 @@ parser.add_argument("-c", "--cuda", help="cuda device", type=int, default=0, cho
 parser.add_argument("-m", "--model1", help="load dqn model1 name", type=str, default='model/dqn1.pth')
 parser.add_argument("-l", "--model2", help="load dqn model2 name", type=str, default='model/dqn2.pth')
 parser.add_argument("-u", "--summary", help="story summary file", type=str, default="data/summary/summary_train.json")
-parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/new_train")
+parser.add_argument("-k", "--kg", help="story knowledge graph folder", type=str, default="data/kg/train_coref")
 args = parser.parse_args()
 
 # set the hyperparameters
@@ -133,8 +133,7 @@ for current_story_name in story_name_list:
         if not done1:
             state1 = env1.observation()
             state1 = torch.tensor(state1, dtype=torch.float32).unsqueeze(0)
-            # action1 = agent1.act(state1)
-            action1 = 0
+            action1 = agent1.act(state1)
             output_dialogue1, output_kg1 = env1.step(action1)
             next_state1 = env1.observation()
             reward1, score1 = env1.reward()
@@ -149,8 +148,7 @@ for current_story_name in story_name_list:
         if not done2:
             state2 = env2.observation()
             state2 = torch.tensor(state2, dtype=torch.float32).unsqueeze(0)
-            # action2 = agent1.act(state1)
-            action2 = 0
+            action2 = agent2.act(state2)
             output_dialogue2, output_kg2 = env2.step(action2)
             next_state2 = env2.observation()
             reward2, score2 = env2.reward()
@@ -171,7 +169,6 @@ for current_story_name in story_name_list:
     logging.info(f'agent1 score: {action_counter}')
 
     # append df
-    # TODO: kg to sen_idx
     df1 = df1.append(env1.dialogue_log_list, ignore_index=True)
     df2 = df2.append(env2.dialogue_log_list, ignore_index=True)
     df1.to_csv('output/dialogue_history_1.csv', index=False)

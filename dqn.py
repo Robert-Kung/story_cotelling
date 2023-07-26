@@ -159,6 +159,9 @@ class DQNTrainer:
         best_score_1 = -1
         best_score_2 = -1
 
+        dialogue_history_df1 = pd.DataFrame()
+        dialogue_history_df2 = pd.DataFrame()
+
         for e in range(self.epoch):
             score1_list = []
             score2_list = []
@@ -223,6 +226,11 @@ class DQNTrainer:
                                 'score1': final_score1, 'score2': final_score2, \
                                 'epsilon1': self.agent1.model.epsilon, 'epsilon2': self.agent2.model.epsilon, \
                                 'similarity1': similarity1, 'similarity2': similarity2}, ignore_index=True)
+                
+                dialogue_history_df1 = dialogue_history_df1.append(self.env1.dialogue_log_list, ignore_index=True)
+                dialogue_history_df2 = dialogue_history_df2.append(self.env2.dialogue_log_list, ignore_index=True)
+                dialogue_history_df1.to_csv(f'output/dialogue_history1_{dt_start_str}.csv', index=False)
+                dialogue_history_df2.to_csv(f'output/dialogue_history2_{dt_start_str}.csv', index=False)
                 
                 score1_list.append(final_score1)
                 score2_list.append(final_score2)

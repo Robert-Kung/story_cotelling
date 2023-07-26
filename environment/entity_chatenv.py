@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 from transformers import AutoTokenizer, AutoModel
-from .tem_graph import KnowledgeGraph
+from .entity_graph import KnowledgeGraph
 from .kg2text.kg2text_model import Kg2TextModel
 from .reward.ranking_model_compare_story import RankingModel
 from stanza.server import CoreNLPClient

@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
-from environment.tem_graph import KnowledgeGraph
-from environment.tem_chatenv import StoryBotRetellEnv
+from environment.entity_graph import KnowledgeGraph
+from environment.entity_chatenv import StoryBotRetellEnv
 import json
 import logging
 from datetime import datetime
@@ -157,10 +157,10 @@ class DQNTrainer:
         df = pd.DataFrame(columns=['epoch', 'episode', 'story_name', 'score1', 'score2', 'epsilon1', 'epsilon2'])
 
         best_score_1 = -1
-        best_score_2 = -1
+        # best_score_2 = -1
 
         dialogue_history_df1 = pd.DataFrame()
-        dialogue_history_df2 = pd.DataFrame()
+        # dialogue_history_df2 = pd.DataFrame()
 
         for e in range(self.epoch):
             score1_list = []
