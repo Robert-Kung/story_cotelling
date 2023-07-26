@@ -1,0 +1,8 @@
+{
+  "openai":
+  {
+    "organization": "org-xxxxxxxxxxxxxxxxxxxxxx",
+    "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxx",
+    "gpt_model": "gpt-3.5-turbo"
+  }
+}
