@@ -166,3 +166,4 @@ temp/
 log/
 
 corenlp_server-*.props
+chatgpt/config.json
