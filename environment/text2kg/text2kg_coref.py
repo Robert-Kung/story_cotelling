@@ -19,6 +19,7 @@ parser.add_argument("-i", "--input", help="input story json file path", type=str
 parser.add_argument("-o", "--output", help="output file path", type=str, default='data/kg2text/kg2text_coref_train.json')
 parser.add_argument("-g", "--goutput", help="output knowledge graph file path", type=str, default='data/kg/train_coref')
 parser.add_argument("-f", "--coreference", help="coreference resolution", type=bool, default=True)
+parser.add_argument("-p", "--port", help="corenlp port", type=int, default=9090)
 args = parser.parse_args()
 
 
@@ -156,7 +157,7 @@ def knowledge_graph_construction(story_dataset):
         'openie.affinity_probability_cap': 0.2,
     }
     
-    with CoreNLPClient(be_quiet=True) as client:
+    with CoreNLPClient(be_quiet=True, endpoint=f'http://localhost:{args.port}') as client:
         # openie resolve_coref =
         for story_name in story_dataset.keys():
             logging.info(f'Processing {story_name}')
