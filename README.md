@@ -109,9 +109,9 @@ python3 dqn_inference.py
 │   ├── kg2text                 # kg2text模型與程式碼
 │   │   └── model/
 │   └── text2kg                 # text2kg程式碼
-├── log/
-├── model/
-├── output/
+├── log/                        # 訓練紀錄
+├── model/                      # 模型
+├── output/                     # 訓練/推論過程的對話紀錄(輸出)
 ├── dqn_inference.py                 # Multi-Env MARL推論程式碼
 ├── dqn_train.py                     # Multi-Env MARL訓練程式碼
 ├── dqn.py                           # Multi-Env MARL模型
